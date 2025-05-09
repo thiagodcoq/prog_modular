@@ -3,7 +3,7 @@
 
 
 def cria_exercicio(titulo_lista:str,lista_de_exercicio:list)->None:
-    """ Funcao que salva no json a lista de exercicios junto de seu titulo
+    """ Funcao que cira json com a lista de exercicios junto de seu titulo
 
     Args:
         titulo_lista (str): Titulo da lista
@@ -11,6 +11,14 @@ def cria_exercicio(titulo_lista:str,lista_de_exercicio:list)->None:
     """
     pass
 
+def passa_lista(titulo_lista:str,turma:str)->None:
+    """ Funcao que recebe o titulo de uma lista, busca essa lista no json das listas
+    e com o nome da turma adiciona essa lista ao json das turmas
+
+    Args:
+        titulo_lista (str): _description_
+        turma (str): _description_
+    """
 
 
 def cria_turma(nome_turma:str)->None:
