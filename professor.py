@@ -1,5 +1,11 @@
+def cadastro_professor(matricula:int,nome:str)->None:
+    """ Funcao que salva em um json todos os professores cadastrados e suas respectivas matriculas
 
-
+    Args:
+        matricula (int): Matricula do professor
+        nome (str): Nome do professor
+    """
+    pass
 
 
 def cria_exercicio(titulo_lista:str,lista_de_exercicio:list)->None:
