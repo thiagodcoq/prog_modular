@@ -10,7 +10,7 @@ class Conta:
 def criaConta():
     name = input("digite seu nome: ")
     matr = input("digite sua matricula: ")
-    while not matr.isdigit():
+    while not matr.isdigit() or matr >9999999 or matr<1000000:
         matr = input("matricula inválida, digite novamente: ")
     tipo = input("digite 1 se você for um aluno e 2 se for um professor ")
     while tipo !='1' and tipo != '2':
