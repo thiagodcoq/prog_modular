@@ -1,3 +1,6 @@
+from cadastro import conta
+
+
 def cria_exercicio(titulo_lista:str,lista_de_exercicio:list)->None:
     """ Funcao que cira json com a lista de exercicios junto de seu titulo
 
