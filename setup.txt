@@ -1,0 +1,6 @@
+AO ABRIR O PROJETO EXECUTAR ISSO NO TERMINAL DO PROJETO!!!
+
+.venv\Scripts\activate
+
+AO BAIXAR UM PACOTE pip install 
+DAR pip freeze em seguida
