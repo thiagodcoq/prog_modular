@@ -1,38 +1,68 @@
-from dataclasses import dataclass
+entra = input("Digite 'criar' se quiser criar uma conta e 'entrar' se quiser entrar na sua conta já criada: ")
 
-@dataclass
-class Conta:
-    nome: str
-    matricula: int
-    tipo: str
-    senha: str
+while entra != "criar" and entra != "entrar":
+    entra = input("Comando não reconhecido, tente novamente: ")
 
-def criaConta():
-    name = input("digite seu nome: ")
-    matr = input("digite sua matricula: ")
-    while not matr.isdigit() or matr >9999999 or matr<1000000:
-        matr = input("matricula inválida, digite novamente: ")
-    tipo = input("digite 1 se você for um aluno e 2 se for um professor ")
-    while tipo !='1' and tipo != '2':
-        tipo = input("tipo de conta não reconhecida, tente novamente: ")
-    pasw = input("digite sua senha: ")
-    pasc = input("digite novamente sua senha para confirmar: ")
+def criaAluno():
+    nome = input("Digite seu nome: ")
 
+    tipo = input("Digite seu tipo (aluno ou professor): ")
+    while tipo != "aluno" and tipo != "professor":
+        tipo = input("Tipo não reconhecido, tente novamente: ")
+
+    matr = input("Digite sua matrícula (7 dígitos): ")
+    while not matr.isdigit() or int(matr) > 9999999 or int(matr) < 1000000:
+        matr = input("Matrícula inválida, digite novamente (7 dígitos): ")
     
+    idade = input("Digite sua idade: ")
+    while not idade.isdigit() or int(idade) <= 0:
+        idade = input("Idade inválida, digite novamente: ")
+    
+    pasw = input("Digite sua senha: ")
+    pasc = input("Confirme sua senha: ")
+
     while pasw != pasc:
-        pasw = input("as senhas sao diferentes, tente novamente: ")
-        pasc  = input("digite novamente sua senha para confirmar: ")
-    if tipo == '1':
-        novaConta = Conta(name, int(matr), 'aluno', pasw)
-    else:
-        novaConta = Conta(name, int(matr), 'professor', str(pasw))
-    return novaConta
+        pasw = input("Senha confirmada diferente da digitada, digite novamente: ")
+        pasc = input("Confirme novamente: ")
 
+    aluno = {
+        'matricula': int(matr),
+        'nome': nome,
+        'idade': int(idade),
+        'tipo': tipo,
+        'senha': pasw
+    }
+    
+    return aluno
 
-novaPessoa = criaConta()
+lista_alunos = [
+    {'matricula': 20190202, 'nome': 'andré', 'idade': 20, 'tipo': 'aluno', 'senha': 'Dede2005'},
+    {'matricula': 2014433, 'nome': 'flavio', 'idade': 22, 'tipo': 'professor', 'senha': 'flafla03'},
+    {'matricula': 2015555, 'nome': 'ana', 'idade': 25, 'tipo': 'aluno', 'senha': 'aninha25'}
+]
 
+if entra == "criar":
+    novo_aluno = criaAluno()
+    lista_alunos.append(novo_aluno)
+    print("Conta criada com sucesso!")
+    print(lista_alunos)
 
-print(novaPessoa.nome)
-print(novaPessoa.matricula)
-print(novaPessoa.tipo)
-print(novaPessoa.senha)
+def entra_conta(matr, senha):
+    matr = int(matr)
+    encontrado = False
+
+    for aluno in lista_alunos:
+        if aluno['matricula'] == matr:
+            encontrado = True
+            while aluno['senha'] != senha:
+                senha = input("Senha incorreta, tente novamente: ")
+            print(f"Você entrou com sucesso, {aluno['nome']}!")
+            return
+    
+    if not encontrado:
+        print("Matrícula não encontrada.")
+
+if entra == "entrar":
+    matri = input("Digite sua matrícula: ")
+    passw = input("Digite sua senha: ")
+    entra_conta(matri, passw)
