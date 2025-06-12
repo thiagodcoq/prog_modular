@@ -1,14 +1,31 @@
 from cadastro import conta
 
 
-def cria_exercicio(titulo_lista:str,lista_de_exercicio:list)->None:
-    """ Funcao que cira json com a lista de exercicios junto de seu titulo
+def cria_exercicio(exercicios_lista: list, tema: str, enunciado: str, alternativas: list) -> list:
+    """
+    Função que adiciona um novo exercício a uma lista de exercícios.
 
     Args:
-        titulo_lista (str): Titulo da lista
-        lista_de_exercicio (list): Lista em que cada posicao é uma string com uma questao
+        exercicios_lista (list): A lista existente de exercícios à qual o novo exercício será adicionado.
+        tema (str): O tema do exercício.
+        enunciado (str): O enunciado do exercício.
+        alternativas (list): Uma lista de alternativas (A, B, C).
+
+    Returns:
+        list: A lista de exercícios atualizada.
     """
-    pass
+    if len(alternativas) < 3:
+        raise ValueError("São necessárias pelo menos 3 alternativas.")
+
+    novo_exercicio = {
+        'Tema': tema,
+        'Enunciado': enunciado,
+        'Alternativa A': alternativas[0],
+        'Alternativa B': alternativas[1],
+        'Alternativa C': alternativas[2]
+    }
+    exercicios_lista.append(novo_exercicio)
+    return exercicios_lista # Retornar a lista é opcional, pois .append modifica in-place
 
 def passa_lista(titulo_lista:str,turma:str)->None:
     """ Funcao que recebe o titulo de uma lista, busca essa lista no json das listas
