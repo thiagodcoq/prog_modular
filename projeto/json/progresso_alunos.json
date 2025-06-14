@@ -3,15 +3,22 @@
         "artefatos.json": {
             "progresso": 1,
             "respostas": {
-                "0": "b"
+                "0": "a"
             },
             "status": "completo"
         },
         "lista1": {
+            "progresso": 1,
+            "respostas": {
+                "0": "b"
+            },
+            "status": "iniciado"
+        },
+        "teste": {
             "progresso": 2,
             "respostas": {
-                "0": "b",
-                "1": "c"
+                "0": "c",
+                "1": "b"
             },
             "status": "completo"
         }

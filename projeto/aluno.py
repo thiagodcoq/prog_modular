@@ -1,3 +1,4 @@
+# aluno.py
 import json
 import os
 from auxiliar import load_json, save_json, TURMAS_JSON_PATH, LISTAS_DE_EXERCICIOS_DIR, PROGRESO_ALUNOS_JSON_PATH
@@ -94,11 +95,7 @@ def abrir_lista(matricula_aluno: int):
 def responder_lista(matricula_aluno: int, nome_lista_json: str, exercicios: list):
     """
     Objetivo: Permite ao aluno responder a uma lista de exercícios, salvando seu progresso.
-    Parametros:
-        matricula_aluno (int): Matrícula do aluno.
-        nome_lista_json (str): Nome do arquivo JSON da lista de exercícios.
-        exercicios (list): A lista de dicionários de exercícios.
-    Retorno: Nenhum
+    Agora permite voltar para a questão anterior.
     """
     progresso_alunos_data = load_json(PROGRESO_ALUNOS_JSON_PATH, {})
     
@@ -135,12 +132,17 @@ def responder_lista(matricula_aluno: int, nome_lista_json: str, exercicios: list
     respostas_dadas = progresso_alunos_data[matricula_str][nome_lista_json]['respostas']
 
     print(f"\n--- Respondendo Lista: {nome_lista_json} ---")
-    if indice_atual > 0 and indice_atual < len(exercicios): # Só informa se realmente está continuando
+    if indice_atual > 0 and indice_atual < len(exercicios):
         print(f"Você parou no Exercício {indice_atual + 1}. Continuando a partir daqui.")
-    
-    for i in range(indice_atual, len(exercicios)):
-        ex = exercicios[i]
-        print(f"\nExercício {i+1} de {len(exercicios)}:")
+    elif indice_atual == len(exercicios): # Caso em que a lista foi completada e não foi reiniciada
+        print("Esta lista já foi completada. Para refazê-la, selecione a opção novamente e escolha 's' para refazer.")
+        input("Pressione Enter para voltar.")
+        return
+
+    # Loop principal para percorrer os exercícios
+    while indice_atual < len(exercicios):
+        ex = exercicios[indice_atual]
+        print(f"\nExercício {indice_atual + 1} de {len(exercicios)}:")
         print(f"Tema: {ex.get('Tema', 'N/A')}")
         print(f"Enunciado: {ex.get('Enunciado', 'N/A')}")
         
@@ -157,27 +159,47 @@ def responder_lista(matricula_aluno: int, nome_lista_json: str, exercicios: list
                 print(f"{letra_opcao}) {alt_text}")
                 opcoes_validas.append(letra_opcao.lower())
 
+        # Opções de controle: 'parar' e 'voltar'
+        prompt_opcoes = f"Sua resposta ({'/'.join(opcoes_validas)}"
+        if indice_atual > 0: # Só mostra 'voltar' se não for o primeiro exercício
+            prompt_opcoes += " ou 'voltar'"
+        prompt_opcoes += " ou 'parar' para salvar e sair): "
+
+
         while True:
-            resposta = input(f"Sua resposta ({'/'.join(opcoes_validas)} ou 'parar' para salvar e sair): ").strip().lower() # Entrada case-insensitive
+            resposta = input(prompt_opcoes).strip().lower() # Entrada case-insensitive
+            
             if resposta == 'parar':
-                progresso_alunos_data[matricula_str][nome_lista_json]['progresso'] = i # Salva o índice do exercício atual
+                progresso_alunos_data[matricula_str][nome_lista_json]['progresso'] = indice_atual
                 save_json(progresso_alunos_data, PROGRESO_ALUNOS_JSON_PATH)
                 print("Progresso salvo. Você pode continuar esta lista mais tarde.")
                 return
-            if resposta in opcoes_validas:
-                respostas_dadas[str(i)] = resposta # Salva a resposta do exercício 'i'
-                break
+            
+            if resposta == 'voltar' and indice_atual > 0:
+                print("Voltando para a questão anterior...")
+                indice_atual -= 1 # Decrementa o índice para voltar
+                # Não salva o progresso aqui, pois o aluno pode querer continuar voltando
+                break # Sai do loop interno e redesenha a questão anterior
+            elif resposta == 'voltar' and indice_atual == 0:
+                print("Você já está na primeira questão. Não é possível voltar.")
+                # Continua no loop interno para pedir uma resposta válida
+            elif resposta in opcoes_validas:
+                respostas_dadas[str(indice_atual)] = resposta # Salva a resposta da questão atual
+                indice_atual += 1 # Avança para a próxima questão
+                # Salva o progresso após cada resposta para maior segurança, incluindo a resposta
+                progresso_alunos_data[matricula_str][nome_lista_json]['progresso'] = indice_atual
+                progresso_alunos_data[matricula_str][nome_lista_json]['respostas'] = respostas_dadas
+                save_json(progresso_alunos_data, PROGRESO_ALUNOS_JSON_PATH)
+                break # Sai do loop interno e avança para a próxima questão ou finaliza
             else:
                 print("Opção inválida. Tente novamente.")
         
-        progresso_alunos_data[matricula_str][nome_lista_json]['progresso'] = i + 1
-        save_json(progresso_alunos_data, PROGRESO_ALUNOS_JSON_PATH)
-
+    # Se o loop terminar (todos os exercícios foram respondidos)
     progresso_alunos_data[matricula_str][nome_lista_json]['status'] = 'completo'
     save_json(progresso_alunos_data, PROGRESO_ALUNOS_JSON_PATH)
     print("\nVocê completou esta lista de exercícios!")
 
-    # Cálculo dos resultados
+    # Cálculo dos resultados (mesma lógica anterior)
     acertos = 0
     erros = 0
     nao_respondidas = 0
@@ -271,7 +293,7 @@ def revisar_lista(matricula_aluno: int):
                 print(f"C) {ex.get('Alternativa C', 'N/A')}")
                 
                 print(f"Sua Resposta: {resposta_dada.upper()}")
-                if resposta_correta: # Se houver uma resposta correta definida
+                if resposta_correta:
                     print(f"Resposta Correta: {resposta_correta.upper()}")
                     if resposta_dada == resposta_correta:
                          print("Status: Correta")

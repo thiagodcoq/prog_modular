@@ -1,5 +1,5 @@
 import os
-from auxiliar import load_json, save_json, TURMAS_JSON_PATH, LISTAS_DE_EXERCICIOS_DIR, USUARIOS_JSON_PATH
+from auxiliar import load_json, save_json, TURMAS_JSON_PATH, LISTAS_DE_EXERCICIOS_DIR, USUARIOS_JSON_PATH, PROGRESO_ALUNOS_JSON_PATH # Importe PROGRESO_ALUNOS_JSON_PATH
 
 def cria_exercicio(exercicios_lista: list, tema: str, enunciado: str, alternativas: list, nome_lista_json: str) -> list:
     """
@@ -82,7 +82,6 @@ def remove_aluno(nome_turma: str, matricula: int):
         print(f"Erro: Turma '{nome_turma}' não encontrada.")
         return
     
-    # Garante que a estrutura da turma é um dicionário com 'alunos' e 'listas'
     if not isinstance(turmas_data[nome_turma], dict) or "alunos" not in turmas_data[nome_turma]:
         print(f"Aviso: Estrutura da turma '{nome_turma}' inválida. Alunos não podem ser removidos.")
         return
@@ -96,13 +95,14 @@ def remove_aluno(nome_turma: str, matricula: int):
 
 def visualiza_turma(nome_turma: str):
     """
-    Função para visualizar os detalhes de uma turma (alunos e listas).
+    Função para visualizar os detalhes de uma turma (alunos, listas e índice de acertos).
 
     Args:
         nome_turma (str): Nome da turma a ser visualizada.
     """
     turmas_data = load_json(TURMAS_JSON_PATH, {})
     usuarios_data = load_json(USUARIOS_JSON_PATH, {}) # Para buscar nomes dos alunos
+    progresso_alunos_data = load_json(PROGRESO_ALUNOS_JSON_PATH, {}) # Para buscar progresso
 
     if nome_turma not in turmas_data:
         print(f"Erro: Turma '{nome_turma}' não encontrada.")
@@ -116,21 +116,58 @@ def visualiza_turma(nome_turma: str):
     print("\nAlunos:")
     if alunos_na_turma:
         for matricula in alunos_na_turma:
-            aluno_info = usuarios_data.get(str(matricula)) # Matrícula é chave string no usuarios.json
+            aluno_info = usuarios_data.get(str(matricula))
             nome_aluno = aluno_info.get('nome', 'Nome Desconhecido') if aluno_info else 'Nome Desconhecido'
             print(f"- Matrícula: {matricula}, Nome: {nome_aluno}")
     else:
         print("Nenhum aluno nesta turma.")
 
-    # Visualizar Listas
+    # Visualizar Listas e Índice de Acertos
     listas_da_turma = dados_turma.get("listas", [])
     print("\nListas de Exercícios Associadas:")
     if listas_da_turma:
         for nome_lista in listas_da_turma:
-            print(f"- {nome_lista}")
+            print(f"\nLista: {nome_lista}")
+            
+            # Carregar exercícios da lista para ter as respostas corretas
+            lista_full_path = os.path.join(LISTAS_DE_EXERCICIOS_DIR, nome_lista)
+            exercicios_da_lista = load_json(lista_full_path, [])
+            total_questoes_lista = len(exercicios_da_lista)
+            
+            total_acertos_geral = 0
+            total_respostas_contabilizadas_geral = 0 # Contabiliza apenas as que tem resposta correta definida
+
+            if total_questoes_lista == 0:
+                print("  (Lista vazia ou não carregada)")
+                continue
+
+            for matricula_aluno in alunos_na_turma:
+                matricula_str = str(matricula_aluno)
+                aluno_progresso = progresso_alunos_data.get(matricula_str, {}).get(nome_lista, {})
+                
+                # Considera apenas alunos que iniciaram ou completaram a lista
+                if aluno_progresso.get('status') == 'completo' or aluno_progresso.get('progresso', 0) > 0:
+                    respostas_dadas_aluno = aluno_progresso.get('respostas', {})
+                    
+                    # Iterar sobre os exercícios da lista para comparar com as respostas do aluno
+                    for idx_ex, ex_data in enumerate(exercicios_da_lista):
+                        resp_correta = ex_data.get('RespostaCorreta', '').lower()
+                        # Só contabiliza se a questão tiver uma resposta correta definida
+                        if resp_correta:
+                            total_respostas_contabilizadas_geral += 1
+                            resp_dada = respostas_dadas_aluno.get(str(idx_ex), '').lower() # Pega a resposta do aluno para esta questão
+                            if resp_dada == resp_correta:
+                                total_acertos_geral += 1
+
+            if total_respostas_contabilizadas_geral > 0:
+                indice_acerto = (total_acertos_geral / total_respostas_contabilizadas_geral) * 100
+                print(f"  Índice de Acerto da Turma: {indice_acerto:.2f}%") # Apenas a porcentagem
+                print(f"  ({total_acertos_geral} acertos em {total_respostas_contabilizadas_geral} respostas válidas de questões com resposta correta definida.)")
+            else:
+                print("  Nenhum aluno respondeu a esta lista ainda ou as questões não têm resposta correta definida.")
     else:
         print("Nenhuma lista de exercícios associada a esta turma.")
-    print("-" * (len(nome_turma) + 20)) # Linha de separação para estética
+    print("-" * (len(nome_turma) + 20))
 
 def passa_lista(nome_lista_json: str, turma: str):
     """Função para passar uma lista para uma turma, com sugestões de turmas e listas."""

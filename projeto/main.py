@@ -1,6 +1,6 @@
 import os
 from auxiliar import load_json, save_json, LISTAS_DE_EXERCICIOS_DIR, TURMAS_JSON_PATH, USUARIOS_JSON_PATH, PROGRESO_ALUNOS_JSON_PATH
-from professor import cria_exercicio, cria_turma, insere_aluno, remove_aluno, visualiza_turma, passa_lista # Adicione remove_aluno e visualiza_turma
+from professor import cria_exercicio, cria_turma, insere_aluno, remove_aluno, visualiza_turma, passa_lista # Certifique-se de importar visualiza_turma
 from cadastro import cria_usuario, entra_conta
 from aluno import abrir_lista, revisar_lista
 
@@ -22,8 +22,8 @@ def professor_menu():
         print("1. Criar Exercício")
         print("2. Criar Turma")
         print("3. Inserir Aluno em Turma")
-        print("4. Remover Aluno de Turma") # Nova opção
-        print("5. Visualizar Turma")       # Nova opção
+        print("4. Remover Aluno de Turma")
+        print("5. Visualizar Turma e Desempenho") # Atualizado o nome da opção
         print("6. Passar Lista para Turma")
         print("7. Sair")
 
@@ -69,7 +69,6 @@ def professor_menu():
             else:
                 print("Matrícula inválida. Por favor, digite apenas números.")
         
-        # --- Novas opções ---
         elif choice == '4':
             nome_turma = input("Nome da turma de onde o aluno será removido: ")
             matricula_aluno = input("Matrícula do aluno a ser removido (7 dígitos): ")
@@ -78,7 +77,7 @@ def professor_menu():
             else:
                 print("Matrícula inválida. Por favor, digite apenas números.")
 
-        elif choice == '5':
+        elif choice == '5': # Opção para visualizar turma e desempenho
             turmas_data = load_json(TURMAS_JSON_PATH, {})
             print("\n--- Turmas Existentes ---")
             if turmas_data:
@@ -89,12 +88,12 @@ def professor_menu():
             else:
                 print("Nenhuma turma criada ainda.")
 
-        elif choice == '6': # Opção 6 para Passar Lista (anteriormente 4)
+        elif choice == '6':
             nome_lista = input("Nome do arquivo da lista de exercícios (ex: matematica_basica.json): ")
             nome_turma = input("Nome da turma para associar a lista: ")
             passa_lista(nome_lista, nome_turma)
 
-        elif choice == '7': # Opção 7 para Sair (anteriormente 5)
+        elif choice == '7':
             print("Saindo do menu do professor.")
             break
         else:
