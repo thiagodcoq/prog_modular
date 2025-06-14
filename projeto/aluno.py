@@ -1,4 +1,3 @@
-# aluno.py
 import json
 import os
 from auxiliar import load_json, save_json, TURMAS_JSON_PATH, LISTAS_DE_EXERCICIOS_DIR, PROGRESO_ALUNOS_JSON_PATH
@@ -46,7 +45,7 @@ def abrir_lista(matricula_aluno: int):
             lista_idx += 1
     
     if not listas_disponiveis_para_aluno:
-        print("Não há listas de exercícios associadas às suas turmas no momento.")
+        print("Nenhuma lista de exercícios associada às suas turmas no momento.")
         return
 
     try:
@@ -104,19 +103,17 @@ def responder_lista(matricula_aluno: int, nome_lista_json: str, exercicios: list
     if matricula_str not in progresso_alunos_data:
         progresso_alunos_data[matricula_str] = {}
     
-    # Inicializa ou carrega o progresso do aluno para esta lista
     if nome_lista_json not in progresso_alunos_data[matricula_str]:
         progresso_alunos_data[matricula_str][nome_lista_json] = {
-            'progresso': 0, # Começa do primeiro exercício (índice 0)
+            'progresso': 0,
             'respostas': {},
             'status': 'iniciado'
         }
     
-    # Lógica para permitir refazer a lista
     current_status = progresso_alunos_data[matricula_str][nome_lista_json].get('status', 'iniciado')
     if current_status == 'completo':
         print(f"A lista '{nome_lista_json}' já foi completada por você.")
-        refazer = input("Deseja refazer esta lista? (s/n): ").lower() # Entrada case-insensitive
+        refazer = input("Deseja refazer esta lista? (s/n): ").lower()
         if refazer == 's':
             progresso_alunos_data[matricula_str][nome_lista_json]['progresso'] = 0
             progresso_alunos_data[matricula_str][nome_lista_json]['respostas'] = {}
@@ -127,19 +124,17 @@ def responder_lista(matricula_aluno: int, nome_lista_json: str, exercicios: list
             print("Voltando ao menu do aluno.")
             return
 
-    # Carrega o ponto de partida
     indice_atual = progresso_alunos_data[matricula_str][nome_lista_json]['progresso']
     respostas_dadas = progresso_alunos_data[matricula_str][nome_lista_json]['respostas']
 
     print(f"\n--- Respondendo Lista: {nome_lista_json} ---")
     if indice_atual > 0 and indice_atual < len(exercicios):
         print(f"Você parou no Exercício {indice_atual + 1}. Continuando a partir daqui.")
-    elif indice_atual == len(exercicios): # Caso em que a lista foi completada e não foi reiniciada
+    elif indice_atual == len(exercicios):
         print("Esta lista já foi completada. Para refazê-la, selecione a opção novamente e escolha 's' para refazer.")
         input("Pressione Enter para voltar.")
         return
 
-    # Loop principal para percorrer os exercícios
     while indice_atual < len(exercicios):
         ex = exercicios[indice_atual]
         print(f"\nExercício {indice_atual + 1} de {len(exercicios)}:")
@@ -159,15 +154,14 @@ def responder_lista(matricula_aluno: int, nome_lista_json: str, exercicios: list
                 print(f"{letra_opcao}) {alt_text}")
                 opcoes_validas.append(letra_opcao.lower())
 
-        # Opções de controle: 'parar' e 'voltar'
         prompt_opcoes = f"Sua resposta ({'/'.join(opcoes_validas)}"
-        if indice_atual > 0: # Só mostra 'voltar' se não for o primeiro exercício
+        if indice_atual > 0:
             prompt_opcoes += " ou 'voltar'"
         prompt_opcoes += " ou 'parar' para salvar e sair): "
 
 
         while True:
-            resposta = input(prompt_opcoes).strip().lower() # Entrada case-insensitive
+            resposta = input(prompt_opcoes).strip().lower()
             
             if resposta == 'parar':
                 progresso_alunos_data[matricula_str][nome_lista_json]['progresso'] = indice_atual
@@ -177,29 +171,24 @@ def responder_lista(matricula_aluno: int, nome_lista_json: str, exercicios: list
             
             if resposta == 'voltar' and indice_atual > 0:
                 print("Voltando para a questão anterior...")
-                indice_atual -= 1 # Decrementa o índice para voltar
-                # Não salva o progresso aqui, pois o aluno pode querer continuar voltando
-                break # Sai do loop interno e redesenha a questão anterior
+                indice_atual -= 1
+                break
             elif resposta == 'voltar' and indice_atual == 0:
                 print("Você já está na primeira questão. Não é possível voltar.")
-                # Continua no loop interno para pedir uma resposta válida
             elif resposta in opcoes_validas:
-                respostas_dadas[str(indice_atual)] = resposta # Salva a resposta da questão atual
-                indice_atual += 1 # Avança para a próxima questão
-                # Salva o progresso após cada resposta para maior segurança, incluindo a resposta
+                respostas_dadas[str(indice_atual)] = resposta
+                indice_atual += 1
                 progresso_alunos_data[matricula_str][nome_lista_json]['progresso'] = indice_atual
                 progresso_alunos_data[matricula_str][nome_lista_json]['respostas'] = respostas_dadas
                 save_json(progresso_alunos_data, PROGRESO_ALUNOS_JSON_PATH)
-                break # Sai do loop interno e avança para a próxima questão ou finaliza
+                break
             else:
                 print("Opção inválida. Tente novamente.")
         
-    # Se o loop terminar (todos os exercícios foram respondidos)
     progresso_alunos_data[matricula_str][nome_lista_json]['status'] = 'completo'
     save_json(progresso_alunos_data, PROGRESO_ALUNOS_JSON_PATH)
     print("\nVocê completou esta lista de exercícios!")
 
-    # Cálculo dos resultados (mesma lógica anterior)
     acertos = 0
     erros = 0
     nao_respondidas = 0
@@ -207,11 +196,12 @@ def responder_lista(matricula_aluno: int, nome_lista_json: str, exercicios: list
 
     for i, ex in enumerate(exercicios):
         resposta_aluno = respostas_dadas.get(str(i))
+        # CORREÇÃO AQUI: A resposta correta já está salva como letra em minúsculo.
         resposta_correta = ex.get('RespostaCorreta', '').lower()
 
         if resposta_aluno is None:
             nao_respondidas += 1
-        elif resposta_aluno == resposta_correta:
+        elif resposta_aluno == resposta_correta: # Comparação direta de letras
             acertos += 1
         else:
             erros += 1
@@ -219,8 +209,10 @@ def responder_lista(matricula_aluno: int, nome_lista_json: str, exercicios: list
                 'exercicio': i + 1,
                 'tema': ex.get('Tema', 'N/A'),
                 'enunciado': ex.get('Enunciado', 'N/A'),
-                'sua_resposta': resposta_aluno.upper(),
-                'resposta_correta': resposta_correta.upper()
+                # A resposta do aluno é a letra, então vamos buscar o texto da alternativa para exibir
+                'sua_resposta': alternativas[opcoes_validas.index(resposta_aluno)].upper() if resposta_aluno in opcoes_validas else resposta_aluno.upper(),
+                # A resposta correta é a letra, vamos buscar o texto da alternativa para exibir
+                'resposta_correta': alternativas[opcoes_validas.index(resposta_correta)].upper() if resposta_correta in opcoes_validas else resposta_correta.upper()
             })
 
     print("\n--- Resultados Finais ---")
@@ -236,8 +228,8 @@ def responder_lista(matricula_aluno: int, nome_lista_json: str, exercicios: list
             print(f"Tema: {erro['tema']}")
             print(f"Enunciado: {erro['enunciado']}")
             print(f"Sua Resposta: {erro['sua_resposta']}")
-            print(f"Resposta Correta: {erro['resposta_correta']}")
-
+            print(f"Resposta Correta: {erro['resposta_correta']}") # Já convertida para texto da alternativa
+            
     input("\nPressione Enter para continuar...")
 
 
@@ -283,19 +275,41 @@ def revisar_lista(matricula_aluno: int):
             print(f"\n--- Revisão da Lista: {nome_lista_json} ---")
             for i, ex in enumerate(exercicios):
                 resposta_dada = respostas_aluno.get(str(i), "Não respondida")
+                # CORREÇÃO AQUI: A resposta correta já está salva como letra em minúsculo.
                 resposta_correta = ex.get('RespostaCorreta', '').lower()
 
                 print(f"\nExercício {i+1}:")
                 print(f"Tema: {ex.get('Tema', 'N/A')}")
                 print(f"Enunciado: {ex.get('Enunciado', 'N/A')}")
-                print(f"A) {ex.get('Alternativa A', 'N/A')}")
-                print(f"B) {ex.get('Alternativa B', 'N/A')}")
-                print(f"C) {ex.get('Alternativa C', 'N/A')}")
                 
-                print(f"Sua Resposta: {resposta_dada.upper()}")
+                # Para exibir o texto da alternativa, precisamos do array original de alternativas
+                # e do mapeamento letra -> índice.
+                alternativas_ex = [
+                    ex.get('Alternativa A', 'N/A'),
+                    ex.get('Alternativa B', 'N/A'),
+                    ex.get('Alternativa C', 'N/A')
+                ]
+                opcoes_validas_ex = [chr(65+j).lower() for j, alt_text in enumerate(alternativas_ex) if alt_text != 'N/A']
+
+                # CORREÇÃO AQUI: Transforma a letra da resposta para o texto da alternativa para exibição
+                sua_resposta_texto = "Não respondida"
+                if resposta_dada in opcoes_validas_ex:
+                    sua_resposta_texto = alternativas_ex[opcoes_validas_ex.index(resposta_dada)].upper()
+                elif resposta_dada == "não respondida": # Manter a string original se não foi respondida
+                    sua_resposta_texto = resposta_dada.upper()
+                else: # Caso de alguma resposta inválida salva
+                    sua_resposta_texto = "Resposta Inválida: " + resposta_dada.upper()
+
+
+                resposta_correta_texto_ex = "Não Definida"
+                if resposta_correta in opcoes_validas_ex:
+                    resposta_correta_texto_ex = alternativas_ex[opcoes_validas_ex.index(resposta_correta)].upper()
+
+
+                print(f"Sua Resposta: {sua_resposta_texto}")
                 if resposta_correta:
-                    print(f"Resposta Correta: {resposta_correta.upper()}")
-                    if resposta_dada == resposta_correta:
+                    print(f"Resposta Correta: {resposta_correta_texto_ex}")
+                    if resposta_dada == resposta_correta: # Comparação direta de letras
                          print("Status: Correta")
                     elif resposta_dada == "não respondida":
                          print("Status: Não Respondida")
