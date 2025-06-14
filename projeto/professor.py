@@ -120,7 +120,7 @@ def passa_lista(nome_lista_json: str, turma: str):
 if __name__ == "__main__":
     print("--- Testando funcionalidades de professor.py ---")
 
-    # (Opcional) Limpeza para um teste limpo
+
     # if os.path.exists(TURMAS_JSON_PATH): os.remove(TURMAS_JSON_PATH)
     # if os.path.exists(LISTAS_DE_EXERCICIOS_DIR):
     #     for f in os.listdir(LISTAS_DE_EXERCICIOS_DIR):
