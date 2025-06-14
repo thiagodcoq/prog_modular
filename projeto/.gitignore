@@ -1,0 +1,20 @@
+# Ignorar o diretório json que contem os dados do sistema
+json/
+
+# Ignorar arquivos de cache e metadados do Python
+__pycache__/
+*.pyc
+*.pyd
+.Python
+env/
+venv/
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Ignorar arquivos temporários e de editor
+*.swp
+*.swo
+*~
+Thumbs.db # Windows
+.vscode/ # Ignora configurações locais do VS Code
