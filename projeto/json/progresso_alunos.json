@@ -1,0 +1,19 @@
+{
+    "2222222": {
+        "artefatos.json": {
+            "progresso": 1,
+            "respostas": {
+                "0": "b"
+            },
+            "status": "completo"
+        },
+        "lista1": {
+            "progresso": 2,
+            "respostas": {
+                "0": "b",
+                "1": "c"
+            },
+            "status": "completo"
+        }
+    }
+}

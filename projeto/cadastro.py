@@ -1,19 +1,28 @@
-entra = input("Digite 'criar' se quiser criar uma conta e 'entrar' se quiser entrar na sua conta já criada: ")
+import os
+from auxiliar import load_json, save_json, USUARIOS_JSON_PATH
 
-while entra != "criar" and entra != "entrar":
-    entra = input("Comando não reconhecido, tente novamente: ")
+def cria_usuario():
+    """
+    Função que coleta dados do usuário para criar uma nova conta e a salva em um JSON.
+    Retorna o dicionário do usuário criado ou None se a criação falhar (ex: matrícula duplicada).
+    """
+    usuarios_data = load_json(USUARIOS_JSON_PATH, {})
 
-def criaAluno():
     nome = input("Digite seu nome: ")
 
-    tipo = input("Digite seu tipo (aluno ou professor): ")
-    while tipo != "aluno" and tipo != "professor":
-        tipo = input("Tipo não reconhecido, tente novamente: ")
+    tipo = input("Digite seu tipo (aluno ou professor): ").lower() # Convertido para minúsculas
+    while tipo not in ["aluno", "professor"]:
+        tipo = input("Tipo não reconhecido, digite 'aluno' ou 'professor': ").lower() # Convertido para minúsculas
 
     matr = input("Digite sua matrícula (7 dígitos): ")
-    while not matr.isdigit() or int(matr) > 9999999 or int(matr) < 1000000:
-        matr = input("Matrícula inválida, digite novamente (7 dígitos): ")
-    
+    while not matr.isdigit() or not (1000000 <= int(matr) <= 9999999):
+        matr = input("Matrícula inválida. Digite novamente (7 dígitos numéricos): ")
+
+    # Verifica se a matrícula já existe
+    if matr in usuarios_data:
+        print(f"Uma conta com a matrícula {matr} já existe. Por favor, escolha outra ou entre com a existente.")
+        return None
+
     idade = input("Digite sua idade: ")
     while not idade.isdigit() or int(idade) <= 0:
         idade = input("Idade inválida, digite novamente: ")
@@ -22,10 +31,11 @@ def criaAluno():
     pasc = input("Confirme sua senha: ")
 
     while pasw != pasc:
-        pasw = input("Senha confirmada diferente da digitada, digite novamente: ")
+        print("Senha confirmada diferente da digitada.")
+        pasw = input("Digite sua senha novamente: ")
         pasc = input("Confirme novamente: ")
 
-    aluno = {
+    novo_usuario = {
         'matricula': int(matr),
         'nome': nome,
         'idade': int(idade),
@@ -33,36 +43,27 @@ def criaAluno():
         'senha': pasw
     }
     
-    return aluno
-
-lista_alunos = [
-    {'matricula': 20190202, 'nome': 'andré', 'idade': 20, 'tipo': 'aluno', 'senha': 'Dede2005'},
-    {'matricula': 2014433, 'nome': 'flavio', 'idade': 22, 'tipo': 'professor', 'senha': 'flafla03'},
-    {'matricula': 2015555, 'nome': 'ana', 'idade': 25, 'tipo': 'aluno', 'senha': 'aninha25'}
-]
-
-if entra == "criar":
-    novo_aluno = criaAluno()
-    lista_alunos.append(novo_aluno)
+    usuarios_data[matr] = novo_usuario
+    save_json(usuarios_data, USUARIOS_JSON_PATH)
     print("Conta criada com sucesso!")
-    print(lista_alunos)
+    return novo_usuario
 
-def entra_conta(matr, senha):
-    matr = int(matr)
-    encontrado = False
-
-    for aluno in lista_alunos:
-        if aluno['matricula'] == matr:
-            encontrado = True
-            while aluno['senha'] != senha:
-                senha = input("Senha incorreta, tente novamente: ")
-            print(f"Você entrou com sucesso, {aluno['nome']}!")
-            return
+def entra_conta(matricula_str: str, senha_digitada: str):
+    """
+    Função para fazer login. Verifica a matrícula e senha e retorna os dados do usuário logado.
+    Retorna o dicionário do usuário logado ou None se o login falhar.
+    """
+    usuarios_data = load_json(USUARIOS_JSON_PATH, {})
     
-    if not encontrado:
+    if matricula_str not in usuarios_data:
         print("Matrícula não encontrada.")
+        return None
 
-if entra == "entrar":
-    matri = input("Digite sua matrícula: ")
-    passw = input("Digite sua senha: ")
-    entra_conta(matri, passw)
+    usuario = usuarios_data[matricula_str]
+
+    if usuario['senha'] != senha_digitada:
+        print("Senha incorreta.")
+        return None
+    
+    print(f"Você entrou com sucesso, {usuario['nome']}!")
+    return usuario
