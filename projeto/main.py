@@ -1,5 +1,5 @@
 import os
-import sys # Para sys.exit
+import sys
 
 # Importa todas as funções diretamente dos módulos
 import auxiliar
@@ -14,7 +14,6 @@ def setup_initial_environment():
     """
     os.makedirs(auxiliar.LISTAS_DE_EXERCICIOS_DIR, exist_ok=True)
     
-    # Chama load_json para cada arquivo para garantir que existam (e sejam inicializados vazios)
     auxiliar.load_json(auxiliar.TURMAS_JSON_PATH, {})
     auxiliar.load_json(auxiliar.USUARIOS_JSON_PATH, {})
     auxiliar.load_json(auxiliar.PROGRESO_ALUNOS_JSON_PATH, {})
@@ -51,11 +50,24 @@ def professor_menu(logged_in_user):
                     alt = input(f"Alternativa {chr(65+i)}: ")
                     alternativas.append(alt)
                 
-                try:
-                    professor.cria_exercicio(exercicios_existente, tema, enunciado, alternativas, nome_lista)
-                    print(f"Exercício '{tema}' adicionado e lista '{nome_lista}' atualizada.")
-                except ValueError as e:
-                    print(f"Erro ao criar exercício: {e}.")
+                # Exibir alternativas para o professor escolher a correta (agora no main.py)
+                print("Alternativas disponíveis:")
+                for i, alt in enumerate(alternativas):
+                    print(f"{chr(65+i)}) {alt}")
+                
+                resposta_correta_letra = ""
+                while resposta_correta_letra not in ('A', 'B', 'C'):
+                    resposta_correta_letra = input("Digite a letra da alternativa correta (A, B ou C): ").upper()
+                    if resposta_correta_letra not in ('A', 'B', 'C'):
+                        print("Opção inválida. Digite A, B ou C.")
+
+                # Chamar a função do professor com todos os dados coletados
+                resultado = professor.cria_exercicio(exercicios_existente, tema, enunciado, alternativas, resposta_correta_letra, nome_lista)
+                
+                if resultado["status"] == "sucesso":
+                    print(resultado["mensagem"])
+                else:
+                    print(f"Erro ao criar exercício: {resultado['mensagem']}")
                 
                 continuar = input("Adicionar outro exercício a ESTA lista? (s/n): ").lower()
                 if continuar != 's':
@@ -64,39 +76,88 @@ def professor_menu(logged_in_user):
 
         elif choice == '2':
             nome_turma = input("Nome da nova turma: ")
-            professor.cria_turma(nome_turma)
+            resultado = professor.cria_turma(nome_turma)
+            print(resultado["mensagem"])
 
         elif choice == '3':
             nome_turma = input("Nome da turma onde o aluno será inserido: ")
-            matricula_aluno = input("Matrícula do aluno a ser inserido (7 dígitos): ")
-            if matricula_aluno.isdigit():
-                professor.insere_aluno(nome_turma, int(matricula_aluno))
+            matricula_aluno_str = input("Matrícula do aluno a ser inserido (7 dígitos): ")
+            if matricula_aluno_str.isdigit():
+                matricula_aluno = int(matricula_aluno_str)
+                resultado = professor.insere_aluno(nome_turma, matricula_aluno)
+                print(resultado["mensagem"])
             else:
                 print("Matrícula inválida. Por favor, digite apenas números.")
         
         elif choice == '4':
             nome_turma = input("Nome da turma de onde o aluno será removido: ")
-            matricula_aluno = input("Matrícula do aluno a ser removido (7 dígitos): ")
-            if matricula_aluno.isdigit():
-                professor.remove_aluno(nome_turma, int(matricula_aluno))
+            matricula_aluno_str = input("Matrícula do aluno a ser removido (7 dígitos): ")
+            if matricula_aluno_str.isdigit():
+                matricula_aluno = int(matricula_aluno_str)
+                resultado = professor.remove_aluno(nome_turma, matricula_aluno)
+                print(resultado["mensagem"])
             else:
                 print("Matrícula inválida. Por favor, digite apenas números.")
 
         elif choice == '5':
-            turmas_data = auxiliar.load_json(auxiliar.TURMAS_JSON_PATH, {})
+            # Obter e exibir turmas existentes para sugestão (agora no main.py)
+            turmas_existentes = professor.get_turmas_existentes()
             print("\n--- Turmas Existentes ---")
-            if turmas_data:
-                for nome_turma_existente in turmas_data.keys():
+            if turmas_existentes:
+                for nome_turma_existente in turmas_existentes:
                     print(f"- {nome_turma_existente}")
-                nome_turma = input("Digite o nome da turma que deseja visualizar: ")
-                professor.visualiza_turma(nome_turma)
             else:
                 print("Nenhuma turma criada ainda.")
 
+            nome_turma = input("Digite o nome da turma que deseja visualizar: ")
+            resultado = professor.visualiza_turma(nome_turma)
+            
+            if resultado["status"] == "sucesso":
+                print(f"\n--- Detalhes da Turma: {resultado['nome_turma']} ---")
+                print("\nAlunos:")
+                if resultado["alunos"]:
+                    for aluno_detalhe in resultado["alunos"]:
+                        print(f"- Matrícula: {aluno_detalhe['matricula']}, Nome: {aluno_detalhe['nome']}")
+                else:
+                    print("Nenhum aluno nesta turma.")
+
+                print("\nListas de Exercícios Associadas:")
+                if resultado["listas"]:
+                    for lista_detalhe in resultado["listas"]:
+                        print(f"\nLista: {lista_detalhe['nome_lista']}")
+                        print(f"  Índice de Acerto da Turma: {lista_detalhe['indice_acerto']}")
+                        print(f"  {lista_detalhe['msg_acerto']}")
+                else:
+                    print("Nenhuma lista de exercícios associada a esta turma.")
+                print("-" * (len(nome_turma) + 20))
+            else:
+                print(resultado["mensagem"])
+
         elif choice == '6':
-            nome_lista = input("Nome do arquivo da lista de exercícios (ex: matematica_basica.json): ")
+            # Obter e exibir turmas existentes para sugestão (agora no main.py)
+            turmas_existentes = professor.get_turmas_existentes()
+            print("\n--- Turmas Existentes ---")
+            if turmas_existentes:
+                for nome_turma_existente in turmas_existentes:
+                    print(f"- {nome_turma_existente}")
+            else:
+                print("Nenhuma turma encontrada. Crie uma turma primeiro.")
+            
             nome_turma = input("Nome da turma para associar a lista: ")
-            professor.passa_lista(nome_lista, nome_turma)
+
+            # Obter e exibir listas existentes para sugestão (agora no main.py)
+            listas_existentes = professor.get_listas_existentes()
+            print("\n--- Listas de Exercícios Existentes ---")
+            if listas_existentes:
+                for lista_nome in listas_existentes:
+                    print(f"- {lista_nome}")
+            else:
+                print("Nenhuma lista de exercícios encontrada. Crie exercícios primeiro.")
+
+            nome_lista = input("Nome do arquivo da lista de exercícios (ex: matematica_basica.json): ")
+            
+            resultado = professor.passa_lista(nome_lista, nome_turma)
+            print(resultado["mensagem"])
 
         elif choice == '7':
             print("Saindo do menu do professor.")
@@ -104,7 +165,7 @@ def professor_menu(logged_in_user):
         else:
             print("Opção inválida. Tente novamente.")
 
-def aluno_menu(logged_in_user): # Recebe o usuário logado como argumento
+def aluno_menu(logged_in_user):
     """Menu de opções para usuários do tipo 'aluno'."""
     while True:
         print("\n--- Menu do Aluno ---")
@@ -115,9 +176,9 @@ def aluno_menu(logged_in_user): # Recebe o usuário logado como argumento
         choice = input("Escolha uma opção: ")
 
         if choice == '1':
-            aluno.abrir_lista(logged_in_user['matricula']) # Usa a matrícula do usuário logado
+            aluno.abrir_lista(logged_in_user['matricula'])
         elif choice == '2':
-            aluno.revisar_lista(logged_in_user['matricula']) # Usa a matrícula do usuário logado
+            aluno.revisar_lista(logged_in_user['matricula'])
         elif choice == '3':
             print("Saindo do menu do aluno.")
             break
@@ -149,9 +210,9 @@ def main():
         
     if logged_in_user:
         if logged_in_user['tipo'] == 'professor':
-            professor_menu(logged_in_user) # Passa o usuário logado para o menu do professor
+            professor_menu(logged_in_user)
         elif logged_in_user['tipo'] == 'aluno':
-            aluno_menu(logged_in_user) # Passa o usuário logado para o menu do aluno
+            aluno_menu(logged_in_user)
         else:
             print("Tipo de usuário desconhecido. Encerrando.")
             sys.exit(1)

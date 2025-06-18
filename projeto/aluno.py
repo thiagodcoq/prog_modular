@@ -1,3 +1,4 @@
+# aluno.py
 import json
 import os
 from auxiliar import load_json, save_json, TURMAS_JSON_PATH, LISTAS_DE_EXERCICIOS_DIR, PROGRESO_ALUNOS_JSON_PATH
@@ -14,8 +15,8 @@ def _get_aluno_turmas_e_listas(matricula_aluno: int) -> dict:
     turmas_data = load_json(TURMAS_JSON_PATH, {})
     aluno_listas_por_turma = {}
 
-    for nome_turma, dados_turma in turmas_data.items():
-        if matricula_aluno in dados_turma.get("alunos", []):
+    for nome_turma, dados_turma in turmas_data.items(): # Looping through dados_turma
+        if matricula_aluno in dados_turma.get("alunos", []): # Corrected: using dados_turma
             aluno_listas_por_turma[nome_turma] = dados_turma.get("listas", [])
     return aluno_listas_por_turma
 
@@ -45,7 +46,7 @@ def abrir_lista(matricula_aluno: int):
             lista_idx += 1
     
     if not listas_disponiveis_para_aluno:
-        print("Nenhuma lista de exercícios associada às suas turmas no momento.")
+        print("Não há listas de exercícios associadas às suas turmas no momento.")
         return
 
     try:
@@ -196,23 +197,44 @@ def responder_lista(matricula_aluno: int, nome_lista_json: str, exercicios: list
 
     for i, ex in enumerate(exercicios):
         resposta_aluno = respostas_dadas.get(str(i))
-        # CORREÇÃO AQUI: A resposta correta já está salva como letra em minúsculo.
         resposta_correta = ex.get('RespostaCorreta', '').lower()
+
+        opcoes_validas_ex = []
+        for idx_alt, alt_text in enumerate([ex.get('Alternativa A', 'N/A'), ex.get('Alternativa B', 'N/A'), ex.get('Alternativa C', 'N/A')]):
+            if alt_text != 'N/A':
+                opcoes_validas_ex.append(chr(65+idx_alt).lower())
+
 
         if resposta_aluno is None:
             nao_respondidas += 1
-        elif resposta_aluno == resposta_correta: # Comparação direta de letras
+        elif resposta_aluno == resposta_correta:
             acertos += 1
         else:
             erros += 1
+            # Para exibir o texto da alternativa, precisamos do array original de alternativas
+            alternativas_ex_text = [ex.get('Alternativa A', ''), ex.get('Alternativa B', ''), ex.get('Alternativa C', '')]
+            
+            sua_resposta_texto_detalhe = "N/A"
+            if resposta_aluno in opcoes_validas_ex:
+                idx_resp_aluno = opcoes_validas_ex.index(resposta_aluno)
+                sua_resposta_texto_detalhe = alternativas_ex_text[idx_resp_aluno].upper()
+            elif resposta_aluno == "não respondida":
+                sua_resposta_texto_detalhe = "Não Respondida"
+            else: # Caso de alguma resposta inválida salva
+                sua_resposta_texto_detalhe = "Inválida"
+
+            resposta_correta_texto_detalhe = "N/A"
+            if resposta_correta in opcoes_validas_ex:
+                idx_resp_correta = opcoes_validas_ex.index(resposta_correta)
+                resposta_correta_texto_detalhe = alternativas_ex_text[idx_resp_correta].upper()
+
+
             erros_detalhes.append({
                 'exercicio': i + 1,
                 'tema': ex.get('Tema', 'N/A'),
                 'enunciado': ex.get('Enunciado', 'N/A'),
-                # A resposta do aluno é a letra, então vamos buscar o texto da alternativa para exibir
-                'sua_resposta': alternativas[opcoes_validas.index(resposta_aluno)].upper() if resposta_aluno in opcoes_validas else resposta_aluno.upper(),
-                # A resposta correta é a letra, vamos buscar o texto da alternativa para exibir
-                'resposta_correta': alternativas[opcoes_validas.index(resposta_correta)].upper() if resposta_correta in opcoes_validas else resposta_correta.upper()
+                'sua_resposta': sua_resposta_texto_detalhe,
+                'resposta_correta': resposta_correta_texto_detalhe
             })
 
     print("\n--- Resultados Finais ---")
@@ -228,7 +250,7 @@ def responder_lista(matricula_aluno: int, nome_lista_json: str, exercicios: list
             print(f"Tema: {erro['tema']}")
             print(f"Enunciado: {erro['enunciado']}")
             print(f"Sua Resposta: {erro['sua_resposta']}")
-            print(f"Resposta Correta: {erro['resposta_correta']}") # Já convertida para texto da alternativa
+            print(f"Resposta Correta: {erro['resposta_correta']}")
             
     input("\nPressione Enter para continuar...")
 
@@ -275,7 +297,6 @@ def revisar_lista(matricula_aluno: int):
             print(f"\n--- Revisão da Lista: {nome_lista_json} ---")
             for i, ex in enumerate(exercicios):
                 resposta_dada = respostas_aluno.get(str(i), "Não respondida")
-                # CORREÇÃO AQUI: A resposta correta já está salva como letra em minúsculo.
                 resposta_correta = ex.get('RespostaCorreta', '').lower()
 
                 print(f"\nExercício {i+1}:")
@@ -283,7 +304,6 @@ def revisar_lista(matricula_aluno: int):
                 print(f"Enunciado: {ex.get('Enunciado', 'N/A')}")
                 
                 # Para exibir o texto da alternativa, precisamos do array original de alternativas
-                # e do mapeamento letra -> índice.
                 alternativas_ex = [
                     ex.get('Alternativa A', 'N/A'),
                     ex.get('Alternativa B', 'N/A'),
@@ -291,11 +311,11 @@ def revisar_lista(matricula_aluno: int):
                 ]
                 opcoes_validas_ex = [chr(65+j).lower() for j, alt_text in enumerate(alternativas_ex) if alt_text != 'N/A']
 
-                # CORREÇÃO AQUI: Transforma a letra da resposta para o texto da alternativa para exibição
+                # Transforma a letra da resposta para o texto da alternativa para exibição
                 sua_resposta_texto = "Não respondida"
                 if resposta_dada in opcoes_validas_ex:
                     sua_resposta_texto = alternativas_ex[opcoes_validas_ex.index(resposta_dada)].upper()
-                elif resposta_dada == "não respondida": # Manter a string original se não foi respondida
+                elif resposta_dada == "não respondida":
                     sua_resposta_texto = resposta_dada.upper()
                 else: # Caso de alguma resposta inválida salva
                     sua_resposta_texto = "Resposta Inválida: " + resposta_dada.upper()
@@ -309,7 +329,7 @@ def revisar_lista(matricula_aluno: int):
                 print(f"Sua Resposta: {sua_resposta_texto}")
                 if resposta_correta:
                     print(f"Resposta Correta: {resposta_correta_texto_ex}")
-                    if resposta_dada == resposta_correta: # Comparação direta de letras
+                    if resposta_dada == resposta_correta:
                          print("Status: Correta")
                     elif resposta_dada == "não respondida":
                          print("Status: Não Respondida")
